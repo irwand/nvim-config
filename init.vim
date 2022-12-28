@@ -14,7 +14,6 @@ try
    Plug 'vim-scripts/Tab-Name'
    Plug 'qpkorr/vim-bufkill'
    Plug 'vim-scripts/DirDiff.vim'
-   Plug 'csexton/trailertrash.vim'
    Plug 'msanders/snipmate.vim'
    Plug 'tpope/vim-surround'
    Plug 'tpope/vim-abolish'
@@ -24,8 +23,14 @@ try
    Plug 'vim-airline/vim-airline-themes'
    Plug 'vivien/vim-linux-coding-style'
    Plug 'tpope/vim-sensible'
-   Plug 'nvie/vim-flake8'
+   Plug 'nathanaelkane/vim-indent-guides'
    Plug 'Vimjas/vim-python-pep8-indent'
+   Plug 'cespare/vim-toml'
+   Plug 'w0rp/ale'
+   Plug 'rust-lang/rust.vim'
+
+   "testing
+   Plug 'junegunn/vader.vim'
 
    "phindman's tools I need to look at
    "Plug 'terryma/vim-multiple-cursors'
@@ -44,6 +49,24 @@ endtry
 let g:netrw_alto = 1
 let g:netrw_altv = 1
 
+let g:ale_fixers = {
+\   '*': ['remove_trailing_lines', 'trim_whitespace'],
+\   'python': ['black'],
+\}
+let g:ale_linters = {
+\   'python': ['flake8'],
+\}
+let g:ale_fix_on_save = 0
+let g:ale_virtualenv_dir_names = ['.vimvenv']
+let g:airline#extensions#ale#enabled = 1
+"let g:ale_python_flake8_options="--ignore=H903,N816,W503,E203"
+
+let g:rustfmt_autosave = 1
+
+let g:indent_guides_guide_size = 1
+let g:indent_guides_color_change_percent = 3
+let g:indent_guides_enable_on_vim_startup = 1
+
 let g:ctrlp_map = '<Leader>o'
 set wildignore+=*.o,*.obj,*.pyc,*/.hg/*
 let g:ctrlp_custom_ignore = {
@@ -56,6 +79,8 @@ let g:linuxsty_patterns = [ "/usr/src/", "/linux", "/ni6683" ]
 
 let g:airline_theme = 'bubblegum'
 let g:airline#extensions#whitespace#enabled = 0
+let g:airline#extensions#hunks#enabled=0  " this can be slow
+let g:airline#extensions#branch#enabled=0
 " === PLUGIN CONFIG END ===
 
 if has("unix")
@@ -78,6 +103,8 @@ endif
 " this needs to be set before map cmds
 set encoding=utf-8
 
+set mouse=a
+set clipboard=unnamedplus
 set diffopt=filler,iwhite,vertical " ignore whitespace, show filler line, vertical split
 
 
@@ -107,9 +134,9 @@ set showfulltag                  " when completing a word in insert mode,
 
 " Set tab & indent options
 set expandtab                    " insert spaces instead of tabs in insert mode
-set shiftwidth=3                 " shift distance, mainly for >> or << command
+set shiftwidth=2                 " shift distance, mainly for >> or << command
 set shiftround                   " When shifting, round indent distance by multiple shiftwidth
-set tabstop=3                    " tabstop
+set tabstop=2                    " tabstop
 
 " TODO: Change the following according to your preference!
 set cinoptions=>s,e0,n0,f0,{0,}0,^0,:s,=s,ps,t0,c3,+s,(s,us,)20,*30,gs,hs
@@ -220,54 +247,58 @@ au TabLeave * let g:lasttab = tabpagenr()
 
 nmap <Leader>u :CtrlPBuffer<cr>
 
+" Autocmd section
+au BufNewFile,BufRead *.sls setfiletype yaml
+au Filetype yaml setlocal ts=2 sw=2
 
-" Only do this part when compiled with support for autocommands.
-if has("autocmd")
-   " for CPP, C, IPP, ipp files, set the filetype accordingly for syntax
-   " highlighting
-   au BufNewFile,BufRead *.CPP setfiletype cpp
-   au BufNewFile,BufRead *.C setfiletype c
-   au BufNewFile,BufRead *.IPP setfiletype cpp
-   au BufNewFile,BufRead *.ipp setfiletype cpp
+au Filetype ruby setlocal ts=2 sw=2
 
-   autocmd BufWritePost *.py call Flake8()
+" for CPP, C, IPP, ipp files, set the filetype accordingly for syntax
+" highlighting
+au BufNewFile,BufRead *.CPP setfiletype cpp
+au BufNewFile,BufRead *.C setfiletype c
+au BufNewFile,BufRead *.IPP setfiletype cpp
+au BufNewFile,BufRead *.ipp setfiletype cpp
 
-   " for mako file, treat them like html
-   au BufNewFile,BufRead *.mako setfiletype html
+" for mako file, treat them like html
+au BufNewFile,BufRead *.mako setfiletype html
 
-   " For all files set 'textwidth' to 78 characters.
-   "autocmd FileType * setlocal textwidth=78
+" For all files set 'textwidth' to 78 characters.
+"autocmd FileType * setlocal textwidth=78
 
-   " automatically remove trailing whitespace before write
-   autocmd FileType c,cpp,java,python autocmd BufWritePre <buffer> :TrailerTrim
+" When editing a file, always jump to the last known cursor position.
+" Don't do it when the position is invalid or when inside an event handler
+" (happens when dropping a file on gvim).
+autocmd BufReadPost *
+   \ if line("'\"") > 0 && line("'\"") <= line("$") |
+   \   exe "normal g`\"" |
+   \ endif
 
-   " When editing a file, always jump to the last known cursor position.
-   " Don't do it when the position is invalid or when inside an event handler
-   " (happens when dropping a file on gvim).
-   autocmd BufReadPost *
-      \ if line("'\"") > 0 && line("'\"") <= line("$") |
-      \   exe "normal g`\"" |
-      \ endif
-
-   " set omnifunc to be based on syntax files, if omnifunc is not defined for
-   " the file
-   if has("autocmd") && exists("+omnifunc")
-   autocmd Filetype *
-      \  if &omnifunc == "" |
-      \     setlocal omnifunc=syntaxcomplete#Complete |
-      \  endif
-   endif
-
-   " Highlight some nasty keywords with ugly colors
-   autocmd BufReadPost * syn keyword myBUG containedin=ALL BUG TODO IKDTODO IKDBUG IKDHACK IKDNOTE
-   autocmd BufReadPost * hi myBUG guibg=#808000 guifg=#ffff00
-
-   " auto reload vimrc
-   augroup reload_vimrc " {
-      autocmd!
-      autocmd BufWritePost $MYVIMRC source $MYVIMRC
-   augroup END " }
+" set omnifunc to be based on syntax files, if omnifunc is not defined for
+" the file
+if has("autocmd") && exists("+omnifunc")
+autocmd Filetype *
+   \  if &omnifunc == "" |
+   \     setlocal omnifunc=syntaxcomplete#Complete |
+   \  endif
 endif
+
+" Highlight some nasty keywords with ugly colors
+autocmd BufReadPost * syn keyword myBUG containedin=ALL BUG TODO IKDTODO IKDBUG IKDHACK IKDNOTE
+autocmd BufReadPost * hi myBUG guibg=#808000 guifg=#ffff00
+
+" auto reload vimrc
+augroup reload_vimrc " {
+   autocmd!
+   autocmd BufWritePost $MYVIMRC source $MYVIMRC
+augroup END " }
+
+" trigger `autoread` when files changes on disk
+set autoread
+autocmd FocusGained,BufEnter,CursorHold,CursorHoldI * if mode() != 'c' | checktime | endif
+" notification after file change
+autocmd FileChangedShellPost *
+   \ echohl WarningMsg | echo "File changed on disk. Buffer reloaded." | echohl None
 
 set background=dark
 syntax on

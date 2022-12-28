@@ -17,3 +17,4 @@ endif
 set termguicolors
 set background=dark
 colorscheme solarized
+hi IncSearch gui=reverse
