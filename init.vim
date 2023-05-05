@@ -59,7 +59,8 @@ let g:ale_linters = {
 let g:ale_fix_on_save = 0
 let g:ale_virtualenv_dir_names = ['.vimvenv']
 let g:airline#extensions#ale#enabled = 1
-"let g:ale_python_flake8_options="--ignore=H903,N816,W503,E203"
+let g:ale_python_flake8_options="--max-line-length=100"
+let g:ale_python_black_options="--line-length=100"
 
 let g:rustfmt_autosave = 1
 
@@ -92,12 +93,14 @@ if has("unix")
    set shell=/bin/bash           " use bash shell by default
    set directory=/tmp/$USER      " set temporary directory for swap files
    set viewdir=/tmp/$USER        " set temporary directory for view files
+   let g:python3_host_prog = '~/.vimvenv/bin/python'
 else
    set viminfo='32,f0,\"10,n$TMP/viminfo
    set grepprg=c:\..\..\bin\grep.exe\ -n  " use grep program, starting vim 7, we should use vimgrep
    set shell=cmd.exe             " use standard cmd.exe on Windows
    set directory=$TMP            " set temporary directory for swap files
    set viewdir=$TMP              " set temporary directory for view files
+   let g:python3_host_prog = 'c:/dev/.vimvenv/Scripts/python.exe'
 endif
 
 " this needs to be set before map cmds
