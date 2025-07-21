@@ -8,61 +8,31 @@ try
    let g:plug_threads = 1 " otherwise gvim on win crashes
    call plug#begin()
 
-   Plug 'frankier/neovim-colors-solarized-truecolor-only'
-   Plug 'ctrlpvim/ctrlp.vim'
-   Plug 'vim-scripts/DrawIt'
-   Plug 'vim-scripts/Tab-Name'
-   Plug 'qpkorr/vim-bufkill'
-   Plug 'vim-scripts/DirDiff.vim'
-   Plug 'msanders/snipmate.vim'
-   Plug 'tpope/vim-surround'
-   Plug 'tpope/vim-abolish'
-   Plug 'tpope/vim-repeat'
-   Plug 'tpope/vim-fugitive'
-   Plug 'vim-airline/vim-airline'
-   Plug 'vim-airline/vim-airline-themes'
-   Plug 'vivien/vim-linux-coding-style'
-   Plug 'tpope/vim-sensible'
-   Plug 'nathanaelkane/vim-indent-guides'
-   Plug 'Vimjas/vim-python-pep8-indent'
-   Plug 'cespare/vim-toml'
-   Plug 'w0rp/ale'
-   Plug 'rust-lang/rust.vim'
-
-   "testing
-   Plug 'junegunn/vader.vim'
-
-   "phindman's tools I need to look at
-   "Plug 'terryma/vim-multiple-cursors'
-   "Plug 'tpope/vim-dispatch'
-   "Plug 'tpope/vim-unimpaired'
-
-   "this is potentially slow
-   "Plug 'Valloric/YouCompleteMe'
-
-   call plug#end()
-catch
-   echom "Couldn't use Vim-Plug, install it?"
-endtry
-
 " === PLUGIN CONFIG BEGIN ===
 let g:netrw_alto = 1
 let g:netrw_altv = 1
 
+let g:deoplete#enable_at_startup = 1
+
+let g:ale_completion_enabled = 1
 let g:ale_fixers = {
 \   '*': ['remove_trailing_lines', 'trim_whitespace'],
 \   'python': ['black'],
+\   'rust': ['rustfmt'],
 \}
+"   'python': ['flake8', 'mypy', 'pyls'],
 let g:ale_linters = {
-\   'python': ['flake8'],
+\   'python': ['flake8', 'pyls'],
+\   'rust': ['analyzer'],
 \}
 let g:ale_fix_on_save = 0
 let g:ale_virtualenv_dir_names = ['.vimvenv']
 let g:airline#extensions#ale#enabled = 1
-let g:ale_python_flake8_options="--max-line-length=100"
+let g:ale_python_flake8_options="--max-line-length=120 --ignore=E203,W503"
+let g:ale_python_mypy_options="--ignore-missing-imports"
 let g:ale_python_black_options="--line-length=100"
 
-let g:rustfmt_autosave = 1
+let g:rustfmt_autosave = 0
 
 let g:indent_guides_guide_size = 1
 let g:indent_guides_color_change_percent = 3
@@ -83,6 +53,42 @@ let g:airline#extensions#whitespace#enabled = 0
 let g:airline#extensions#hunks#enabled=0  " this can be slow
 let g:airline#extensions#branch#enabled=0
 " === PLUGIN CONFIG END ===
+
+   Plug 'frankier/neovim-colors-solarized-truecolor-only'
+   Plug 'ctrlpvim/ctrlp.vim'
+   Plug 'vim-scripts/DrawIt'
+   " Plug 'vim-scripts/Tab-Name'
+   Plug 'qpkorr/vim-bufkill'
+   Plug 'vim-scripts/DirDiff.vim'
+   Plug 'tpope/vim-surround'
+   Plug 'tpope/vim-repeat'
+   Plug 'tpope/vim-fugitive'
+   Plug 'farmergreg/vim-lastplace'
+   Plug 'vim-airline/vim-airline'
+   Plug 'vim-airline/vim-airline-themes'
+   Plug 'vivien/vim-linux-coding-style'
+   Plug 'tpope/vim-sensible'
+   Plug 'nathanaelkane/vim-indent-guides'
+   Plug 'Vimjas/vim-python-pep8-indent'
+   Plug 'cespare/vim-toml'
+   Plug 'dense-analysis/ale'
+   Plug 'rust-lang/rust.vim'
+   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+   Plug 'github/copilot.vim'
+
+   "testing
+   " Plug 'junegunn/vader.vim'
+
+   "phindman's tools I need to look at
+   "Plug 'terryma/vim-multiple-cursors'
+   "Plug 'tpope/vim-dispatch'
+   "Plug 'tpope/vim-unimpaired'
+
+   call plug#end()
+catch
+   echom "Couldn't use Vim-Plug, install it?"
+endtry
+
 
 if has("unix")
    " create /tmp/$USER for tmp dir for temporary files
@@ -202,7 +208,8 @@ imap <C-BS> <C-W>
 " file. modify g:sourceDir variable if you want to not search in source/ dir.
 " Crap.. vim 7 supports vimgrep, but this thing is a bit slow now. Maybe we'll
 " use vimgrep in the future.
-let g:sourceDir="source/"
+" let g:sourceDir="source/"
+let g:sourceDir=""
 map <expr> <M-8> ":grep -rw <cword> " . g:sourceDir . "*<cr>"
 
 " Completion.. From vim.org Tip #102: smart mapping for tab completion during
@@ -224,17 +231,12 @@ inoremap <s-tab> <c-r>=InsertTabWrapper("forward")<cr>
 " more easily accessible
 let mapleader=","
 
-fun! PerforceBlame()
-execute "!python c:/bin/p4_introduced.py " . bufname("%") . " " . line(".")
-endfun
-
 " TODO: perforce mapping. Comment these lines below if you use perforce plugin
 nmap <Leader>pa :!p4 add "%"<cr>
 nmap <Leader>pe :!p4 edit "%"<cr>:e!<cr>
 nmap <Leader>pr :!p4 revert "%"<cr>:e!<cr>
 nmap <Leader>ps :!p4 sync "%"<cr>:e!<cr>
 nmap <Leader>pu :!p4 submit<cr>:e!<cr>
-nmap <Leader>pb :call PerforceBlame()<cr>
 
 " this maps ,e to ":e <path to current file>" handy for opening new files
 if has("unix")
@@ -263,28 +265,15 @@ au BufNewFile,BufRead *.C setfiletype c
 au BufNewFile,BufRead *.IPP setfiletype cpp
 au BufNewFile,BufRead *.ipp setfiletype cpp
 
-" for mako file, treat them like html
-au BufNewFile,BufRead *.mako setfiletype html
+" For all files disable textwidth which affect wrapping
+autocmd FileType * setlocal textwidth=0
 
-" For all files set 'textwidth' to 78 characters.
-"autocmd FileType * setlocal textwidth=78
-
-" When editing a file, always jump to the last known cursor position.
-" Don't do it when the position is invalid or when inside an event handler
-" (happens when dropping a file on gvim).
-autocmd BufReadPost *
-   \ if line("'\"") > 0 && line("'\"") <= line("$") |
-   \   exe "normal g`\"" |
-   \ endif
-
-" set omnifunc to be based on syntax files, if omnifunc is not defined for
-" the file
-if has("autocmd") && exists("+omnifunc")
-autocmd Filetype *
-   \  if &omnifunc == "" |
-   \     setlocal omnifunc=syntaxcomplete#Complete |
-   \  endif
-endif
+" Use ALE as completion sources for all code.
+call deoplete#custom#option('sources', {
+\ '_': ['ale'],
+\})
+set omnifunc=ale#completion#OmniFunc
+set completeopt=menu,menuone,preview,noselect,noinsert
 
 " Highlight some nasty keywords with ugly colors
 autocmd BufReadPost * syn keyword myBUG containedin=ALL BUG TODO IKDTODO IKDBUG IKDHACK IKDNOTE
