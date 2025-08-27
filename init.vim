@@ -146,6 +146,7 @@ set expandtab                    " insert spaces instead of tabs in insert mode
 set shiftwidth=2                 " shift distance, mainly for >> or << command
 set shiftround                   " When shifting, round indent distance by multiple shiftwidth
 set tabstop=2                    " tabstop
+set breakindent
 
 " TODO: Change the following according to your preference!
 set cinoptions=>s,e0,n0,f0,{0,}0,^0,:s,=s,ps,t0,c3,+s,(s,us,)20,*30,gs,hs
@@ -257,6 +258,9 @@ au BufNewFile,BufRead *.sls setfiletype yaml
 au Filetype yaml setlocal ts=2 sw=2
 
 au Filetype ruby setlocal ts=2 sw=2
+
+au Filetype txt setlocal ts=2 sw=2 wrap
+au Filetype md setlocal ts=2 sw=2 wrap
 
 " for CPP, C, IPP, ipp files, set the filetype accordingly for syntax
 " highlighting
